@@ -27,18 +27,19 @@ source "proxmox" "ubuntu-server-focal" {
     # insecure_skip_tls_verify = true
     
     # VM General Settings
-    node = "your-proxmox-node"
-    vm_id = "100"
-    vm_name = "ubuntu-server-focal"
+    node = "proxmox139"
+    vm_id = "102"
+    vm_name = "ubuntu-template"
     template_description = "Ubuntu Server Focal Image"
 
     # VM OS Settings
     # (Option 1) Local ISO File
-    iso_file = "local:iso/ubuntu-20.04.2-live-server-amd64.iso"
+    iso_file = "Nfs-ISO-Proxmox5:iso/ubuntu-22.04-live-server-amd64.iso"
     # - or -
     # (Option 2) Download ISO
-    # iso_url = "https://releases.ubuntu.com/20.04/ubuntu-20.04.3-live-server-amd64.iso"
-    # iso_checksum = "f8e3086f3cea0fb3fefb29937ab5ed9d19e767079633960ccb50e76153effc98"
+    // iso_url = "https://releases.ubuntu.com/20.04/ubuntu-20.04.3-live-server-amd64.iso"
+    // iso_checksum = "caf3fd69c77c439f162e2ba6040e9c320c4ff0d69aad1340a514319a9264df9f"
+    // iso_checksum_type: "sha256"
     iso_storage_pool = "local"
     unmount_iso = true
 
@@ -49,9 +50,9 @@ source "proxmox" "ubuntu-server-focal" {
     scsi_controller = "virtio-scsi-pci"
 
     disks {
-        disk_size = "20G"
+        disk_size = "1G"
         format = "qcow2"
-        storage_pool = "local-lvm"
+        storage_pool = "hdd"
         storage_pool_type = "lvm"
         type = "virtio"
     }
@@ -65,21 +66,26 @@ source "proxmox" "ubuntu-server-focal" {
     # VM Network Settings
     network_adapters {
         model = "virtio"
-        bridge = "vmbr0"
-        firewall = "false"
+        bridge = "vmbr4"
+        firewall = "true"
     } 
 
     # VM Cloud-Init Settings
     cloud_init = true
-    cloud_init_storage_pool = "local-lvm"
+    cloud_init_storage_pool = "hdd"
 
     # PACKER Boot Commands
     boot_command = [
-        "<esc><wait><esc><wait>",
-        "<f6><wait><esc><wait>",
+        // "<esc><wait><esc><wait>",
+        // "<f6><wait><esc><wait>",
+        // "<bs><bs><bs><bs><bs>",
+        // "autoinstall ds=nocloud-net;s=http://{{ .HTTPIP }}:{{ .HTTPPort }}/ ",
+        // "--- <enter>"
+        "<esc><wait><esc><wait><f6><wait><esc><wait>",
         "<bs><bs><bs><bs><bs>",
         "autoinstall ds=nocloud-net;s=http://{{ .HTTPIP }}:{{ .HTTPPort }}/ ",
         "--- <enter>"
+
     ]
     boot = "c"
     boot_wait = "5s"
@@ -91,10 +97,10 @@ source "proxmox" "ubuntu-server-focal" {
     # http_port_min = 8802
     # http_port_max = 8802
 
-    ssh_username = "your-user-name"
+    ssh_username = "test2"
 
     # (Option 1) Add your Password here
-    ssh_password = "your-password"
+    ssh_password = "test2"
     # - or -
     # (Option 2) Add your Private SSH KEY file here
     # ssh_private_key_file = "~/.ssh/id_rsa"
@@ -138,22 +144,22 @@ build {
     # Add additional provisioning scripts here
     # ...
     # install docker
-    provisioner "shell"{
-        inline = [
-            "sudo apt-get remove docker docker-engine docker.io containerd runc",
-            "sudo apt-get update",
-            "sudo apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common lsb-release",
-            "sudo mkdir -p /etc/apt/keyrings",
-            "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg",
-            "echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null",
-            "sudo apt-get update",
-            "sudo apt -y install docker-ce docker-ce-cli containerd.io docker-compose-plugin",
-            # specific docker version
-            #"sudo apt-get install -y docker-ce=<VERSION_STRING> docker-ce-cli=<VERSION_STRING> containerd.io docker-compose-plugin",
-            "sudo groupadd docker",
-            "sudo usermod -aG docker $USER",
-            "sudo systemctl enable docker",
-            "sudo systemctl start docker",
-        ]
-    }
+    // provisioner "shell"{
+    //     inline = [
+    //         "sudo apt-get remove docker docker-engine docker.io containerd runc",
+    //         "sudo apt-get update",
+    //         "sudo apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common lsb-release",
+    //         "sudo mkdir -p /etc/apt/keyrings",
+    //         "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg",
+    //         "echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null",
+    //         "sudo apt-get update",
+    //         "sudo apt -y install docker-ce docker-ce-cli containerd.io docker-compose-plugin",
+    //         # specific docker version
+    //         #"sudo apt-get install -y docker-ce=<VERSION_STRING> docker-ce-cli=<VERSION_STRING> containerd.io docker-compose-plugin",
+    //         "sudo groupadd docker",
+    //         "sudo usermod -aG docker $USER",
+    //         "sudo systemctl enable docker",
+    //         "sudo systemctl start docker",
+    //     ]
+    // }
 }

@@ -3,7 +3,8 @@ autoinstall:
   version: 1
   locale: en_US
   keyboard:
-    layout: de
+    layout: en
+    variant: us
   ssh:
     install-server: true
     allow-pw: true
@@ -20,14 +21,14 @@ autoinstall:
       size: 0
   user-data:
     package_upgrade: false
-    timezone: Europe/Berlin
+    timezone: Asia/Jakarta
     users:
-      - name: your-user-name
+      - name: test3
         groups: [adm, sudo]
         lock-passwd: false
         sudo: ALL=(ALL) NOPASSWD:ALL
         shell: /bin/bash
-        # passwd: your-password
+        passwd: test3
         # - or -
         # ssh_authorized_keys:
         #   - your-ssh-key
