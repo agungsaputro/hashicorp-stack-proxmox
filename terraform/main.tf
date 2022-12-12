@@ -10,7 +10,7 @@ resource "proxmox_vm_qemu" "svr_test1" {
     target_node = var.target_node
     vmid = "100${count.index+1}"
     name = var.vm_name
-    desc = "Description"
+    desc = "Description: ini vm os ubuntu 22.04 yang di otomasi dengan terraform"
 
     # VM Advanced General Settings
     onboot = true 
@@ -22,12 +22,12 @@ resource "proxmox_vm_qemu" "svr_test1" {
     agent = 1
     
     # VM CPU Settings
-    cores = 1
-    sockets = 1
+    cores = var.cores
+    sockets = var.sockets
     cpu = "host"    
     
     # VM Memory Settings
-    memory = 1024
+    memory = var.memory
 
     # VM Disk
     scsihw = "virtio-scsi-pci"
@@ -37,9 +37,9 @@ resource "proxmox_vm_qemu" "svr_test1" {
     disk{
        slot         = 0
         # set disk size here. leave it small for testing because expanding the disk takes time.
-        size        = "10G"
-        type        = "scsi"
-        storage     = "hdd"
+        size        = "${var.svr_disk["size"]}"
+        type        = "${var.svr_disk["type"]}"
+        storage     = "${var.svr_disk["storage"]}"
         # storage_type = "lvm"
         iothread    = 1 
         #backup      = true
@@ -47,9 +47,9 @@ resource "proxmox_vm_qemu" "svr_test1" {
 
     # VM Network Settings
     network {
-        bridge = "vmbr4"
-        model  = "virtio"
-        tag    = "35"
+        bridge = "${var.svr_network["bridge"]}"
+        model  = "${var.svr_network["model"]}"
+        tag    = "${var.svr_network["tag"]}"
         firewall = true
     }
 
@@ -59,18 +59,61 @@ resource "proxmox_vm_qemu" "svr_test1" {
         ]
     }
     
+    sshkeys = file(var.ssh_key_path["pub"])
 
     # VM Cloud-Init Settings
     os_type = "cloud-init"
 
     # VM IP Address and Gateway
-    ipconfig0 = "ip=172.16.35.119/24,gw=172.16.35.1"
-    nameserver = "203.153.49.109 203.217.140.14"
+    ipconfig0 = "ip=${var.svr_ip}/24,gw=${var.svr_gw}"
+    nameserver = "${var.svr_nameservers}"
     
 
     # Default User & Password
     ciuser = var.svr_username
     cipassword = var.svr_password
-  
+
+    connection {
+      type          = "ssh"
+      host          = "${var.svr_ip}" 
+      user          = "${var.svr_username}"
+    #   password      = "${var.svr_password}"
+      private_key   = "${file("${var.ssh_key_path["priv"]}")}"
+    }
+
+    provisioner "remote-exec" {
+      inline = [
+        "sudo apt-get update -y",
+        "sudo apt-get upgrade -y"
+      ]
+    }
+
+    provisioner "local-exec" {
+      working_dir = "../ansible"
+      command = "ansible-playbook -u ${var.svr_username} --key-file ${var.ssh_key_path["priv"]} -i ${var.svr_ip}, setup-ssh-allow-password.yaml"
+    }
 }
 
+# resource "null_resource" "provisioningAnsible" {
+    
+#     ## connection for ansible initialisation new vm created
+#     connection {
+#       type          = "ssh"
+#       host          = "${var.svr_ip}" 
+#       user          = "${var.svr_username}"
+#     #   password      = "${var.svr_password}"
+#       private_key   = "${file("${var.ssh_key_path["priv"]}")}"
+#     }
+
+#     provisioner "remote-exec" {
+#       inline = [
+#         "sudo apt-get update -y",
+#         "sudo apt-get upgrade -y"
+#       ]
+#     }
+
+#     provisioner "local-exec" {
+#       working_dir = "../ansible"
+#       command = "ansible-playbook -u ${var.svr_username} --key-file ${var.ssh_key_path["priv"]} -i ${var.svr_ip}, setup-ssh-allow-password.yaml"
+#     }
+# }
